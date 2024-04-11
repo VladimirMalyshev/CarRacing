@@ -2,6 +2,20 @@
 
 using namespace sf;
 
+struct Car
+{
+    float x, y, speed, angle;
+
+    Car() { speed = 2; angle = 0;}
+
+    void move()
+    {
+        x += sin(angle) * speed;
+        y -= cos(angle) * speed;
+        angle += 0.08;
+    }
+};
+
 int main()
 {
     RenderWindow app(VideoMode(640, 480), "Car Racing Game!");
@@ -14,6 +28,15 @@ int main()
     Sprite sBackground(t1), sCar(t2);
     sCar.setPosition(300, 300);
     sCar.setOrigin(22, 22);
+
+    const int N = 5;
+    Car car[N];
+    for (int i = 0; i < N; i++)
+    {
+        car[i].x = 300 + i * 50;
+        car[i].y = 1700 + i * 80;
+        car[i].speed = 7 + i;
+    }
     
     float x = 300, y = 300;
     float speed = 0, angle = 0;
@@ -56,24 +79,31 @@ int main()
         if (Right && speed != 0) angle += turnSpeed * speed / maxSpeed;
         if (Left && speed != 0) angle -= turnSpeed * speed / maxSpeed;
 
-        x += sin(angle) * speed;
-        y -= cos(angle) * speed;
+        car[0].speed = speed;
+        car[0].angle = angle;
+         
+        for (int i = 0; i < N; i++) car[i].move();
 
-        if (x > 320) offsetX = x - 320;
-        if (y > 240) offsetY = y - 240;
+        if (car[0].x > 320) offsetX = car[0].x - 320;
+        if (car[0].y > 240) offsetY = car[0].y - 240;
 
         ////draw////
         app.clear(Color::White);
         sBackground.setScale(2, 2);
-        sBackground.setPosition(-offsetX, -offsetY);
-        
+        sBackground.setPosition(-offsetX, -offsetY);   
         app.draw(sBackground);
 
+        Color colors[N] = { Color::Red, Color::Green, Color::Magenta, Color::Blue, Color::White };
 
-        sCar.setPosition(x - offsetX,y - offsetY);
-        sCar.setRotation(angle * 180 / 3.141592);
-        sCar.setColor(Color::Red);
-        app.draw(sCar);
+        for (int i = 0; i < N; i++) 
+        {
+            sCar.setPosition(car[i].x - offsetX, car[i].y - offsetY);
+            sCar.setRotation(car[i].angle * 180 / 3.141592);
+            sCar.setColor(colors[i]);
+            app.draw(sCar);
+        }
+
+        
 
         app.display();
 
