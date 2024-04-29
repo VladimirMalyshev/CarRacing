@@ -1,18 +1,44 @@
 #include <SFML/Graphics.hpp>
+//#include <cmath>
 
 using namespace sf;
+
+const int NUM = 8; //checkpoints
+int points[NUM][2] = {
+    {300, 610},
+    {1270, 430,},
+    {1380, 2380},
+    {1900, 2460},
+    {1970, 1700},
+    {2550, 1680},
+    {2560, 3150},
+    {500, 3300} };
+
 
 struct Car
 {
     float x, y, speed, angle;
+    int n;
 
-    Car() { speed = 2; angle = 0;}
+    Car() { speed = 2; angle = 0; n = 0; }
 
     void move()
     {
         x += sin(angle) * speed;
         y -= cos(angle) * speed;
-        angle += 0.08;
+    }
+    void findTarget()
+    {
+        float tx = points[n][0];
+        float ty = points[n][1];
+        //smooth turn
+        float beta = angle - atan2(tx - x, -ty + y);
+        if (sin(beta) < 0) angle += 0.005 * speed;
+        else angle -= 0.005 * speed;
+
+        if ((x - tx) * (x - tx) + (y - ty) * (y - ty) < 25 * 25)
+            n = (n + 1) % NUM;
+        
     }
 };
 
@@ -26,8 +52,10 @@ int main()
     t2.loadFromFile("images/car.png");
 
     Sprite sBackground(t1), sCar(t2);
+    sBackground.setScale(2, 2);
     sCar.setPosition(300, 300);
     sCar.setOrigin(22, 22);
+    float R = 22;
 
     const int N = 5;
     Car car[N];
@@ -38,7 +66,6 @@ int main()
         car[i].speed = 7 + i;
     }
     
-    float x = 300, y = 300;
     float speed = 0, angle = 0;
     float maxSpeed = 12.0;
     float acc = 0.2, dec = 0.3;
@@ -82,14 +109,33 @@ int main()
         car[0].speed = speed;
         car[0].angle = angle;
          
-        for (int i = 0; i < N; i++) car[i].move();
+        for (int i = 0; i < N; i++)
+        {
+            car[i].move();
+            car[i].findTarget();
+        }      
+
+        //collision
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++)
+            {
+                int dx = car[i].x - car[j].x;
+                int dy = car[i].y - car[j].y;
+                if (dx * dx + dy * dy < 4 * R * R)
+                {
+                    car[i].x += dx / 10;
+                    car[i].y += dy / 10;
+                    car[j].x -= dx / 10;
+                    car[j].y -= dy / 10;
+                }
+            }
+        }
 
         if (car[0].x > 320) offsetX = car[0].x - 320;
         if (car[0].y > 240) offsetY = car[0].y - 240;
 
         ////draw////
         app.clear(Color::White);
-        sBackground.setScale(2, 2);
         sBackground.setPosition(-offsetX, -offsetY);   
         app.draw(sBackground);
 
